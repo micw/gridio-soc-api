@@ -136,7 +136,7 @@ docker run --rm -p 8080:8080 -v gridio-data:/data gridio-soc-api:local
 
 GitHub Actions runs tests then builds linux/amd64 and linux/arm64 images on every
 branch/tag push. GHCR package: `ghcr.io/micw/gridio-soc-api`.
-Tags are `branch-<branch>`, `tag-<git-tag>` and `sha-<short-commit>` (Docker-safe
+Tags are `<branch>`, `<git-tag>` and `sha-<short-commit>` (Docker-safe
 normalization). No `latest` is generated, including version tags. PRs test/build
 without publishing. The workflow uses `GITHUB_TOKEN` with package write permission;
 first publication/package visibility may need repository configuration.

@@ -31,7 +31,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: gridio
-          image: ghcr.io/micw/gridio-soc-api:branch-master
+          image: ghcr.io/micw/gridio-soc-api:master
           imagePullPolicy: Always
           ports:
             - name: http
