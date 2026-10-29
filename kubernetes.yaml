@@ -1,0 +1,90 @@
+# Example: change the namespace/image ref and configure optional auth using a Secret.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gridio-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gridio
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gridio
+  template:
+    metadata:
+      labels:
+        app: gridio
+    spec:
+      securityContext:
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: gridio
+          image: ghcr.io/micw/gridio-soc-api:branch-master
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: GRIDIO_DATA_DIR
+              value: /data
+            - name: GRIDIO_WEB_ENABLED
+              value: 'false'
+            - name: GRIDIO_POLL_INTERVAL
+              value: 1h
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          # Do not gate the login UI/metrics on authenticated readiness.
+          readinessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: gridio-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gridio-api
+spec:
+  selector:
+    app: gridio
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
